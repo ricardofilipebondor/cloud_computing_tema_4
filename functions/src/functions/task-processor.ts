@@ -1,6 +1,7 @@
 import { app, InvocationContext } from "@azure/functions";
 import { BlobServiceClient } from "@azure/storage-blob";
 import sql, { config as SqlConfig } from "mssql";
+import { trackEvent, trackException } from "../application-insights";
 
 type TaskMessage = {
   taskId: string;
@@ -304,6 +305,7 @@ async function handler(message: TaskMessage | string, context: InvocationContext
   const parsed = parseTaskMessage(message);
 
   context.log(`Processing queued task: ${parsed.taskId} (${parsed.title})`);
+  trackEvent("TaskProcessingStarted", { taskId: parsed.taskId });
 
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
@@ -334,6 +336,10 @@ async function handler(message: TaskMessage | string, context: InvocationContext
       .input("summary", sql.NVarChar(sql.MAX), summary)
       .query("UPDATE [Task] SET [processed] = 1, [summary] = @summary WHERE [id] = @taskId");
     context.log(`Task ${parsed.taskId} marked as processed.`);
+    trackEvent("TaskProcessed", {
+      taskId: parsed.taskId,
+      hasSummary: summary ? "true" : "false"
+    });
   } finally {
     await pool.close();
   }
@@ -342,5 +348,17 @@ async function handler(message: TaskMessage | string, context: InvocationContext
 app.storageQueue("taskProcessor", {
   connection: "Storage",
   queueName: process.env.AZURE_QUEUE_NAME || "tasksqueue",
-  handler
+  handler: async (message, context) => {
+    try {
+      await handler(message as TaskMessage | string, context);
+    } catch (error) {
+      const taskId =
+        typeof message === "string" ? "unknown" : ((message as { taskId?: string }).taskId ?? "unknown");
+      trackException(error, {
+        functionName: "taskProcessor",
+        taskId
+      });
+      throw error;
+    }
+  }
 });

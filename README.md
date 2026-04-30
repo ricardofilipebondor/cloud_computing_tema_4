@@ -18,6 +18,7 @@ Production-ready example of a Task Manager SaaS app using multiple Azure service
 4. **Azure Blob Storage** - durable file attachment storage.
 5. **Azure Queue Storage** - decouples task creation from background processing.
 6. **Azure Functions** - event-driven queue consumer, marks tasks as processed.
+7. **Azure Application Insights** - centralized telemetry for API and queue worker.
 
 ## Orchestration Flow
 
@@ -67,6 +68,7 @@ AZURE_STORAGE_CONNECTION_STRING=
 AZURE_QUEUE_NAME=
 AZURE_BLOB_CONTAINER=
 AZURE_FUNCTION_URL=
+APPLICATIONINSIGHTS_CONNECTION_STRING=
 ```
 
 > `AZURE_FUNCTION_URL` is included to support future HTTP-trigger integrations and monitoring hooks.
@@ -121,6 +123,7 @@ Set:
 - `AZURE_STORAGE_CONNECTION_STRING`
 - `AZURE_BLOB_CONTAINER`
 - `AZURE_QUEUE_NAME`
+- `APPLICATIONINSIGHTS_CONNECTION_STRING` (for API + Functions telemetry)
 
 ### 3) Deploy Backend (Azure App Service)
 
@@ -146,6 +149,7 @@ Option B: **Azure App Service**
    - `AzureWebJobsStorage` = storage connection string
    - `AZURE_QUEUE_NAME` = queue name
    - `DATABASE_URL` = same PostgreSQL URL
+   - `APPLICATIONINSIGHTS_CONNECTION_STRING` = connection string from Application Insights
 4. Build/start command should point to compiled output.
 
 ### 6) Verify End-to-End

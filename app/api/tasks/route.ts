@@ -5,20 +5,29 @@ import {
   sendTaskToQueue,
   uploadTaskFile
 } from "@/lib/azure-storage";
+import { trackEvent, trackException } from "@/lib/application-insights";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-  const tasks = await prisma.task.findMany({
-    orderBy: { createdAt: "desc" }
-  });
-  const tasksWithSignedUrls = await Promise.all(
-    tasks.map(async (task) => ({
-      ...task,
-      fileUrl: task.fileUrl ? await getSignedBlobUrl(task.fileUrl) : null
-    }))
-  );
-  return NextResponse.json(tasksWithSignedUrls);
+  try {
+    const tasks = await prisma.task.findMany({
+      orderBy: { createdAt: "desc" }
+    });
+    const tasksWithSignedUrls = await Promise.all(
+      tasks.map(async (task) => ({
+        ...task,
+        fileUrl: task.fileUrl ? await getSignedBlobUrl(task.fileUrl) : null
+      }))
+    );
+
+    trackEvent("TasksListed", { taskCount: String(tasks.length) });
+    return NextResponse.json(tasksWithSignedUrls);
+  } catch (error) {
+    trackException(error, { route: "GET /api/tasks" });
+    console.error("GET /api/tasks failed:", error);
+    return NextResponse.json({ error: "Failed to load tasks" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -44,6 +53,10 @@ export async function POST(request: NextRequest) {
     });
 
     await sendTaskToQueue({ taskId: task.id, title: task.title });
+    trackEvent("TaskQueued", {
+      taskId: task.id,
+      hasAttachment: task.fileUrl ? "true" : "false"
+    });
 
     const createdTask = {
       ...task,
@@ -52,6 +65,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(createdTask, { status: 201 });
   } catch (error) {
+    trackException(error, { route: "POST /api/tasks" });
     console.error("POST /api/tasks failed:", error);
     return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
   }
