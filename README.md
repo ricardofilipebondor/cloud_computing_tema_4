@@ -69,6 +69,9 @@ AZURE_QUEUE_NAME=
 AZURE_BLOB_CONTAINER=
 AZURE_FUNCTION_URL=
 APPLICATIONINSIGHTS_CONNECTION_STRING=
+AZURE_TRANSLATOR_KEY=
+AZURE_TRANSLATOR_ENDPOINT=https://api.cognitive.microsofttranslator.com
+AZURE_TRANSLATOR_REGION=
 ```
 
 > `AZURE_FUNCTION_URL` is included to support future HTTP-trigger integrations and monitoring hooks.
@@ -94,6 +97,7 @@ APPLICATIONINSIGHTS_CONNECTION_STRING=
 - `GET /api/tasks` - list tasks
 - `PATCH /api/tasks/:id` - mark task completed/uncompleted
 - `DELETE /api/tasks/:id` - delete task
+- `POST /api/translate` - translate one or more text values using Azure Translator
 
 ## Deployment Guide
 
