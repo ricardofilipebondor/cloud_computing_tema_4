@@ -1,0 +1,23 @@
+{
+  "name": "task-processor-function",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "func start",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.7.3",
+    "@azure/storage-blob": "^12.31.0",
+    "mssql": "^12.5.0"
+  },
+  "devDependencies": {
+    "@types/mssql": "^12.3.0",
+    "@types/node": "^22.15.3",
+    "azure-functions-core-tools": "^4.10.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3"
+  }
+}
